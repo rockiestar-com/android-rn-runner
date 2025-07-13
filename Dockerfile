@@ -54,6 +54,9 @@ RUN gem install bundler
 # Pre-install common npm packages that are frequently used (as root)
 RUN npm install -g @expo/cli@latest tsx
 
+# Pre-install common Ruby gems that are used in Android builds (as root)
+RUN gem install fastlane cocoapods
+
 # Set up environment variables
 ENV BUNDLE_RETRY=3
 ENV BUNDLE_JOBS=4
@@ -109,9 +112,6 @@ RUN mkdir -p \
     /home/builder/.pnpm \
     /home/builder/.cache \
     /home/builder/workspace
-
-# Pre-install common Ruby gems that are used in Android builds
-RUN gem install fastlane cocoapods
 
 # Optimize for CI environment
 ENV CI=true
