@@ -1,23 +1,17 @@
-FROM reactnativecommunity/react-native-android:v18.0
+FROM cimg/android:2025.04.1-node
+
+# Switch to root to install packages
+USER root
 
 # Set non-interactive mode for apt-get
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update package lists and install system dependencies
+# Update package lists and install additional system dependencies
 RUN apt-get update && \
     apt-get install -y \
         postgresql-server-dev-all \
-        curl \
-        ca-certificates \
-        gnupg \
-        lsb-release \
-        sudo \
-        git \
-        python3 \
         python3-pip \
         build-essential \
-        wget \
-        unzip \
         ruby-full \
         libffi-dev \
         libssl-dev \
@@ -40,10 +34,6 @@ RUN apt-get update && \
         ssl-cert \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20.x (specific version from log: 20.19.3)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs
-
 # Install and enable pnpm via corepack
 RUN npm install -g corepack@latest && \
     corepack enable pnpm
@@ -54,13 +44,11 @@ RUN gem install bundler
 # Set up environment variables
 ENV BUNDLE_RETRY=3
 ENV BUNDLE_JOBS=4
-ENV BUNDLE_PATH=/home/builder/.bundle
+ENV BUNDLE_PATH=/home/circleci/.bundle
 ENV DOCKER_DRIVER=overlay2
 
 # Pre-install Android SDK components that are downloaded during build
-# Based on the log, these are commonly needed:
-ENV ANDROID_HOME=/opt/android
-ENV ANDROID_SDK_ROOT=/opt/android
+# CircleCI image already has Android SDK, but we may need additional components
 RUN yes | sdkmanager --licenses && \
     sdkmanager "build-tools;35.0.0" \
     "platforms;android-35" \
@@ -78,20 +66,19 @@ RUN wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip -O /tm
 ENV GRADLE_HOME=/opt/gradle/gradle-8.13
 ENV PATH="$GRADLE_HOME/bin:$PATH"
 
-# Create a user for running the build (avoid root warnings)
-RUN useradd -m -s /bin/bash builder && \
-    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-    chown -R builder:builder /home/builder
+# Give circleci user sudo access
+RUN echo "circleci ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    chown -R circleci:circleci /home/circleci
 
-# Switch to builder user
-USER builder
+# Switch back to circleci user
+USER circleci
 
 # Set up user environment
-ENV PATH="$PATH:/home/builder/.local/bin"
-ENV PNPM_HOME="/home/builder/.pnpm"
+ENV PATH="$PATH:/home/circleci/.local/bin"
+ENV PNPM_HOME="/home/circleci/.pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-ENV BUNDLE_PATH=/home/builder/.bundle
-ENV GRADLE_USER_HOME=/home/builder/.gradle
+ENV BUNDLE_PATH=/home/circleci/.bundle
+ENV GRADLE_USER_HOME=/home/circleci/.gradle
 
 # Pre-install common npm packages that are frequently used
 RUN npm install -g @expo/cli@latest tsx
@@ -100,15 +87,15 @@ RUN npm install -g @expo/cli@latest tsx
 RUN pnpm --version
 
 # Create workspace directory and set up basic structure
-WORKDIR /home/builder/workspace
+WORKDIR /home/circleci/workspace
 
 # Pre-create commonly used directories
 RUN mkdir -p \
-    /home/builder/.bundle \
-    /home/builder/.gradle \
-    /home/builder/.pnpm \
-    /home/builder/.cache \
-    /home/builder/workspace
+    /home/circleci/.bundle \
+    /home/circleci/.gradle \
+    /home/circleci/.pnpm \
+    /home/circleci/.cache \
+    /home/circleci/workspace
 
 # Pre-install common Ruby gems that are used in Android builds
 RUN gem install fastlane cocoapods
