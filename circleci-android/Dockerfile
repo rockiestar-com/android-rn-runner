@@ -41,6 +41,9 @@ RUN npm install -g corepack@latest && \
 # Install bundler for Ruby dependencies
 RUN gem install bundler
 
+# Pre-install common npm packages that are frequently used (as root)
+RUN npm install -g @expo/cli@latest tsx
+
 # Set up environment variables
 ENV BUNDLE_RETRY=3
 ENV BUNDLE_JOBS=4
@@ -79,9 +82,6 @@ ENV PNPM_HOME="/home/circleci/.pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV BUNDLE_PATH=/home/circleci/.bundle
 ENV GRADLE_USER_HOME=/home/circleci/.gradle
-
-# Pre-install common npm packages that are frequently used
-RUN npm install -g @expo/cli@latest tsx
 
 # Initialize pnpm (this will download pnpm 10.12.4 as seen in log)
 RUN pnpm --version
