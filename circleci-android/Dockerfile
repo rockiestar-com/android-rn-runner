@@ -52,7 +52,7 @@ ENV DOCKER_DRIVER=overlay2
 
 # Pre-install Android SDK components that are downloaded during build
 # CircleCI image already has Android SDK, but we may need additional components
-RUN yes | sdkmanager --licenses && \
+RUN (yes || true) | sdkmanager --licenses && \
     sdkmanager "build-tools;35.0.0" \
     "platforms;android-35" \
     "ndk;27.0.12077973" \

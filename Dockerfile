@@ -64,7 +64,7 @@ ENV DOCKER_DRIVER=overlay2
 # Based on the log, these are commonly needed:
 ENV ANDROID_HOME=/opt/android
 ENV ANDROID_SDK_ROOT=/opt/android
-RUN yes | sdkmanager --licenses && \
+RUN (yes || true) | sdkmanager --licenses && \
     sdkmanager "build-tools;35.0.0" \
     "platforms;android-35" \
     "ndk;27.0.12077973" \
